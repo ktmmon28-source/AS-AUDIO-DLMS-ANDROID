@@ -1,6 +1,7 @@
 
 package com.asaudio.dlms
-
+import android.util.Log
+import android.widget.Toast
 import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
@@ -60,7 +61,14 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        try {
+            val dspStatus = NativeDsp.getEngineStatus()
+            Log.i("AS_AUDIO_DSP", dspStatus)
+            Toast.makeText(this, dspStatus, Toast.LENGTH_LONG).show()
+        } catch (e: LinkageError) {
+            Log.e("AS_AUDIO_DSP", "Native DSP library error", e)
+            Toast.makeText(this, "Native DSP library error", Toast.LENGTH_LONG).show()
+        }
         projectionManager =
             getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
 
