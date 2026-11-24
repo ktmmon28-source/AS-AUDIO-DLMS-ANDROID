@@ -19,7 +19,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import org.json.JSONObject
-
+import android.app.AlertDialog
 class MainActivity : Activity() {
 
     private lateinit var webView: WebView
@@ -117,6 +117,25 @@ class MainActivity : Activity() {
         registerCaptureReceiver()
 
         webView.loadUrl("file:///android_asset/index.html")
+        AlertDialog.Builder(this)
+    .setTitle("AS AUDIO NATIVE DSP")
+    .setMessage("Jalankan tes suara stereo 440 Hz selama 2 detik?")
+    .setPositiveButton("PUTAR TES") { _, _ ->
+        val started = try {
+            NativeDsp.startTestTone()
+        } catch (e: LinkageError) {
+            Log.e("AS_AUDIO_DSP", "Test tone error", e)
+            false
+        }
+
+        Toast.makeText(
+            this,
+            if (started) "Tes suara dimulai" else "Gagal membuka audio output",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+    .setNegativeButton("NANTI", null)
+    .show()
     }
 
     private fun registerCaptureReceiver() {
