@@ -7,108 +7,173 @@
 <title>AS AUDIO DLMS</title>
 
 <style>
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
     min-height: 100vh;
-    padding: 20px;
+    padding: 16px;
     background: #080808;
     color: #eee;
     font-family: Arial, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .panel {
     width: 100%;
     max-width: 480px;
-    padding: 25px 20px;
+    margin: auto;
+    padding: 22px 18px;
     background: #151515;
     border: 1px solid #333;
     border-top: 4px solid #e00000;
     border-radius: 12px;
-    text-align: center;
 }
 
 h1 {
     color: #f00000;
     letter-spacing: 3px;
+    text-align: center;
     margin-bottom: 5px;
 }
 
 h2 {
+    text-align: center;
     margin-top: 5px;
 }
 
 .subtitle {
     color: #999;
     font-size: 13px;
+    text-align: center;
 }
 
-button {
+.section {
     margin-top: 22px;
-    padding: 16px 22px;
-    width: 100%;
-    border: 0;
-    border-radius: 8px;
-    background: #d90000;
-    color: white;
-    font-size: 15px;
-    font-weight: bold;
+    padding: 15px;
+    background: #0b0b0b;
+    border: 1px solid #333;
+    border-radius: 9px;
 }
 
-button:active {
-    background: #900000;
+.section-title {
+    color: #ddd;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+}
+
+button, .file-label {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border: 0;
+    border-radius: 7px;
+    background: #c90000;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+}
+
+button:active, .file-label:active {
+    background: #850000;
+}
+
+.file-label {
+    background: #17445a;
+}
+
+#filePicker {
+    display: none;
+}
+
+.now-playing {
+    color: #48c9ef;
+    font-size: 14px;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+    min-height: 20px;
+}
+
+.player-controls {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.player-controls button {
+    margin: 0;
+    padding: 13px 5px;
+    background: #292929;
+}
+
+.player-controls button:nth-child(2) {
+    background: #c90000;
+}
+
+audio {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.playlist {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 14px;
+}
+
+.track-item {
+    padding: 12px;
+    margin-top: 6px;
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 6px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.track-item.active {
+    border-color: #e00000;
+    color: #ff6666;
+    background: #281313;
+}
+
+.small-status {
+    color: #999;
+    font-size: 12px;
+    margin-top: 12px;
+    text-align: center;
 }
 
 .status {
-    margin-top: 22px;
+    margin-top: 20px;
     padding: 12px;
     background: #090909;
     border: 1px solid #333;
     border-radius: 8px;
     color: #00dd77;
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 12px;
+    text-align: center;
     overflow-wrap: anywhere;
 }
 
-.meters {
-    margin-top: 25px;
-    padding: 16px;
-    background: #0b0b0b;
-    border: 1px solid #333;
-    border-radius: 8px;
-    text-align: left;
-}
-
-.meter-title {
-    margin-bottom: 18px;
-    color: #ddd;
-    font-size: 14px;
-    font-weight: bold;
-    text-align: center;
-    letter-spacing: 1px;
-}
-
-.channel {
-    margin-top: 16px;
-}
+.channel { margin-top: 15px; }
 
 .channel-head {
     display: flex;
     justify-content: space-between;
     margin-bottom: 7px;
     color: #ccc;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .track {
-    height: 17px;
+    height: 16px;
     width: 100%;
     background: #292929;
     border: 1px solid #444;
@@ -120,19 +185,15 @@ button:active {
     height: 100%;
     width: 0%;
     background: linear-gradient(
-        90deg,
-        #00a84f,
-        #a6df00,
-        #ffb000,
-        #f00000
+        90deg, #00a84f, #a6df00, #ffb000, #f00000
     );
     transition: width 0.1s linear;
 }
 
 .note {
-    margin-top: 14px;
+    margin-top: 12px;
     color: #777;
-    font-size: 11px;
+    font-size: 10px;
     text-align: center;
 }
 </style>
@@ -143,9 +204,40 @@ button:active {
 
     <h1>AS AUDIO</h1>
     <h2>DLMS ANDROID</h2>
-    <p class="subtitle">
-        Digital Loudspeaker Management System
-    </p>
+    <p class="subtitle">Digital Loudspeaker Management System</p>
+
+    <div class="section">
+        <div class="section-title">LOCAL MP3 PLAYER</div>
+
+        <div class="now-playing" id="nowPlaying">
+            BELUM ADA LAGU DIPILIH
+        </div>
+
+        <label class="file-label" for="filePicker">
+            + PILIH FILE MP3 DARI HP
+        </label>
+
+        <input
+            type="file"
+            id="filePicker"
+            accept=".mp3,audio/mpeg,audio/*"
+            multiple
+        >
+
+        <audio id="audioPlayer" controls preload="metadata"></audio>
+
+        <div class="player-controls">
+            <button onclick="previousTrack()">⏮ PREV</button>
+            <button onclick="togglePlayback()" id="playButton">▶ PLAY</button>
+            <button onclick="nextTrack()">NEXT ⏭</button>
+        </div>
+
+        <div class="small-status" id="playerStatus">
+            Playlist kosong
+        </div>
+
+        <div class="playlist" id="playlist"></div>
+    </div>
 
     <button onclick="testAudioCapture()">
         TEST AUDIO CAPTURE
@@ -155,8 +247,8 @@ button:active {
         ANDROID ENGINE READY
     </div>
 
-    <div class="meters">
-        <div class="meter-title">STEREO PCM MONITOR</div>
+    <div class="section">
+        <div class="section-title">STEREO PCM MONITOR</div>
 
         <div class="channel">
             <div class="channel-head">
@@ -178,14 +270,120 @@ button:active {
             </div>
         </div>
 
-        <div class="note">
-            PCM 48 kHz • 16-BIT • STEREO
-        </div>
+        <div class="note">PCM 48 kHz • 16-BIT • STEREO</div>
     </div>
 
 </div>
 
 <script>
+const audioPlayer = document.getElementById("audioPlayer");
+const filePicker = document.getElementById("filePicker");
+
+let tracks = [];
+let currentTrack = -1;
+
+filePicker.addEventListener("change", function() {
+    const files = Array.from(this.files || []);
+
+    if (!files.length) return;
+
+    tracks = files.map(file => ({
+        name: file.name,
+        url: URL.createObjectURL(file)
+    }));
+
+    currentTrack = 0;
+    renderPlaylist();
+    loadTrack(currentTrack, true);
+
+    document.getElementById("playerStatus").textContent =
+        tracks.length + " lagu ditambahkan ke playlist";
+});
+
+function renderPlaylist() {
+    const list = document.getElementById("playlist");
+    list.innerHTML = "";
+
+    tracks.forEach((track, index) => {
+        const item = document.createElement("div");
+        item.className = "track-item" +
+            (index === currentTrack ? " active" : "");
+
+        item.textContent = (index + 1) + ". " + track.name;
+
+        item.onclick = function() {
+            loadTrack(index, true);
+        };
+
+        list.appendChild(item);
+    });
+}
+
+function loadTrack(index, autoPlay) {
+    if (index < 0 || index >= tracks.length) return;
+
+    currentTrack = index;
+    audioPlayer.src = tracks[index].url;
+    audioPlayer.load();
+
+    document.getElementById("nowPlaying").textContent =
+        tracks[index].name;
+
+    document.getElementById("playButton").textContent = "▶ PLAY";
+
+    renderPlaylist();
+
+    if (autoPlay) {
+        audioPlayer.play().catch(() => {
+            document.getElementById("playerStatus").textContent =
+                "Tekan PLAY untuk memulai lagu";
+        });
+    }
+}
+
+function togglePlayback() {
+    if (currentTrack < 0) {
+        document.getElementById("playerStatus").textContent =
+            "Pilih file MP3 terlebih dahulu";
+        return;
+    }
+
+    if (audioPlayer.paused) {
+        audioPlayer.play().catch(() => {});
+    } else {
+        audioPlayer.pause();
+    }
+}
+
+function nextTrack() {
+    if (!tracks.length) return;
+    loadTrack((currentTrack + 1) % tracks.length, true);
+}
+
+function previousTrack() {
+    if (!tracks.length) return;
+    loadTrack(
+        (currentTrack - 1 + tracks.length) % tracks.length,
+        true
+    );
+}
+
+audioPlayer.addEventListener("play", function() {
+    document.getElementById("playButton").textContent = "⏸ PAUSE";
+    document.getElementById("playerStatus").textContent = "Lagu sedang diputar";
+});
+
+audioPlayer.addEventListener("pause", function() {
+    document.getElementById("playButton").textContent = "▶ PLAY";
+});
+
+audioPlayer.addEventListener("ended", nextTrack);
+
+audioPlayer.addEventListener("error", function() {
+    document.getElementById("playerStatus").textContent =
+        "File tidak dapat diputar";
+});
+
 function testAudioCapture() {
     if (window.Android &&
         typeof Android.requestAudioCapture === "function") {
@@ -194,7 +392,6 @@ function testAudioCapture() {
             "MENUNGGU IZIN AUDIO CAPTURE...";
 
         Android.requestAudioCapture();
-
     } else {
         document.getElementById("status").textContent =
             "ANDROID BRIDGE TIDAK TERDETEKSI";
@@ -202,31 +399,19 @@ function testAudioCapture() {
 }
 
 window.onCapturePermissionResult = function(granted) {
-    const status = document.getElementById("status");
-
-    if (granted) {
-        status.textContent =
-            "IZIN CAPTURE DIBERIKAN - MENUNGGU DATA PCM";
-    } else {
-        status.textContent = "IZIN CAPTURE DITOLAK";
-    }
+    document.getElementById("status").textContent = granted
+        ? "IZIN CAPTURE DIBERIKAN - MENUNGGU DATA PCM"
+        : "IZIN CAPTURE DITOLAK";
 };
 
 window.onAudioCaptureUpdate = function(message, left, right) {
-    const status = document.getElementById("status");
-
     const l = Math.max(0, Math.min(1, Number(left) || 0));
     const r = Math.max(0, Math.min(1, Number(right) || 0));
 
-    status.textContent = message;
+    document.getElementById("status").textContent = message;
+    document.getElementById("leftValue").textContent = l.toFixed(3);
+    document.getElementById("rightValue").textContent = r.toFixed(3);
 
-    document.getElementById("leftValue").textContent =
-        l.toFixed(3);
-
-    document.getElementById("rightValue").textContent =
-        r.toFixed(3);
-
-    // Skala visual meter: RMS 0.20 ditampilkan sebagai 100%.
     document.getElementById("leftBar").style.width =
         Math.min(100, l * 500) + "%";
 
