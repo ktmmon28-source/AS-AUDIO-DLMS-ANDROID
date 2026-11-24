@@ -137,7 +137,69 @@ class MainActivity : Activity() {
     .setNegativeButton("NANTI", null)
     .show()
     }
+private fun runPcmEngineTest() {
+    NativeDsp.stopTestTone()
 
+    if (!NativeDsp.startPcmStream(48000)) {
+        Toast.makeText(this, "PCM stream gagal dibuka", Toast.LENGTH_LONG).show()
+        return
+    }
+
+    Toast.makeText(this, "Tes PCM stereo dimulai", Toast.LENGTH_SHORT).show()
+
+    Thread({
+        try {
+            val sampleRate = 48000
+            val channels = 2
+            val bufferFrames = 1024
+            val samples = ShortArray(bufferFrames * channels)
+
+            var phase = 0.0
+            val phaseStep = 2.0 * Math.PI * 440.0 / sampleRate
+            var remainingFrames = sampleRate * 2
+
+            while (remainingFrames > 0) {
+                val frames = minOf(bufferFrames, remainingFrames)
+
+                for (i in 0 until frames) {
+                    val value = (12000.0 * kotlin.math.sin(phase)).toInt().toShort()
+                    samples[i * 2] = value
+                    samples[i * 2 + 1] = value
+
+                    phase += phaseStep
+                    if (phase >= 2.0 * Math.PI) {
+                        phase -= 2.0 * Math.PI
+                    }
+                }
+
+                var offset = 0
+                val sampleCount = frames * channels
+
+                while (offset < sampleCount) {
+                    val written = NativeDsp.writePcm(
+                        samples, offset, sampleCount - offset, channels
+                    )
+
+                    if (written > 0) {
+                        offset += written * channels
+                    } else {
+                        Thread.sleep(2)
+                    }
+                }
+
+                remainingFrames -= frames
+            }
+
+            while (NativeDsp.getPcmQueuedFrames() > 0) {
+                Thread.sleep(5)
+            }
+        } catch (e: Exception) {
+            Log.e("AS_AUDIO_DSP", "PCM test failed", e)
+        } finally {
+            NativeDsp.stopPcmStream()
+        }
+    }, "ASAudioPcmTest").start()
+}
     private fun registerCaptureReceiver() {
         val filter = IntentFilter(
             AudioCaptureService.ACTION_CAPTURE_STATUS
