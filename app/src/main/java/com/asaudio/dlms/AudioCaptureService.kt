@@ -22,6 +22,7 @@ import android.os.Looper
 import android.util.Log
 import android.Manifest
 import android.content.pm.PackageManager
+import kotlin.math.sqrt
 
 class AudioCaptureService : Service() {
 
@@ -29,17 +30,20 @@ class AudioCaptureService : Service() {
         const val EXTRA_RESULT_CODE = "capture_result_code"
         const val EXTRA_RESULT_DATA = "capture_result_data"
 
+        const val ACTION_CAPTURE_STATUS = "com.asaudio.dlms.CAPTURE_STATUS"
+        const val EXTRA_STATUS = "capture_status"
+        const val EXTRA_LEFT_LEVEL = "capture_left_level"
+        const val EXTRA_RIGHT_LEVEL = "capture_right_level"
+
         private const val CHANNEL_ID = "AS_AUDIO_CAPTURE"
         private const val NOTIFICATION_ID = 2001
         private const val TAG = "AS_AUDIO_CAPTURE"
 
         fun start(context: Context, resultCode: Int, data: Intent) {
-            val serviceIntent =
-                Intent(context, AudioCaptureService::class.java).apply {
-                    putExtra(EXTRA_RESULT_CODE, resultCode)
-                    putExtra(EXTRA_RESULT_DATA, data)
-                }
-
+            val serviceIntent = Intent(context, AudioCaptureService::class.java).apply {
+                putExtra(EXTRA_RESULT_CODE, resultCode)
+                putExtra(EXTRA_RESULT_DATA, data)
+            }
             context.startForegroundService(serviceIntent)
         }
     }
@@ -51,16 +55,21 @@ class AudioCaptureService : Service() {
     @Volatile
     private var capturing = false
 
-    private val projectionCallback =
-        object : MediaProjection.Callback() {
-            override fun onStop() {
-                Log.d(TAG, "MediaProjection stopped")
-                capturing = false
-                stopSelf()
-            }
-        }
-
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun publishStatus(
+        message: String,
+        left: Float = 0f,
+        right: Float = 0f
+    ) {
+        val update = Intent(ACTION_CAPTURE_STATUS).apply {
+            setPackage(packageName)
+            putExtra(EXTRA_STATUS, message)
+            putExtra(EXTRA_LEFT_LEVEL, left.coerceIn(0f, 1f))
+            putExtra(EXTRA_RIGHT_LEVEL, right.coerceIn(0f, 1f))
+        }
+        sendBroadcast(update)
+    }
 
     override fun onStartCommand(
         intent: Intent?,
@@ -70,19 +79,13 @@ class AudioCaptureService : Service() {
 
         createNotificationChannel()
 
-        val notification = buildNotification(
-            "Menyiapkan audio capture..."
-        )
+        val notification = buildNotification("Menyiapkan audio capture...")
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
-        }
+        startForeground(
+            NOTIFICATION_ID,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+        )
 
         val resultCode = intent?.getIntExtra(
             EXTRA_RESULT_CODE,
@@ -91,17 +94,14 @@ class AudioCaptureService : Service() {
 
         val data: Intent? =
             if (Build.VERSION.SDK_INT >= 33) {
-                intent?.getParcelableExtra(
-                    EXTRA_RESULT_DATA,
-                    Intent::class.java
-                )
+                intent?.getParcelableExtra(EXTRA_RESULT_DATA, Intent::class.java)
             } else {
                 @Suppress("DEPRECATION")
                 intent?.getParcelableExtra(EXTRA_RESULT_DATA)
             }
 
         if (resultCode != Activity.RESULT_OK || data == null) {
-            Log.e(TAG, "Capture permission data missing")
+            publishStatus("DATA IZIN CAPTURE TIDAK ADA")
             stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -109,7 +109,7 @@ class AudioCaptureService : Service() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
-            updateNotification("Izin audio belum diberikan")
+            publishStatus("IZIN MIKROFON BELUM DIBERIKAN")
             stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -118,17 +118,14 @@ class AudioCaptureService : Service() {
             startAudioCapture(resultCode, data)
         } catch (e: Exception) {
             Log.e(TAG, "Capture initialization failed", e)
-            updateNotification("Audio capture gagal dimulai")
+            publishStatus("CAPTURE GAGAL: ${e.message ?: "kesalahan engine"}")
             stopSelf(startId)
         }
 
         return START_NOT_STICKY
     }
 
-    private fun startAudioCapture(
-        resultCode: Int,
-        data: Intent
-    ) {
+    private fun startAudioCapture(resultCode: Int, data: Intent) {
 
         val manager = getSystemService(
             MEDIA_PROJECTION_SERVICE
@@ -140,7 +137,13 @@ class AudioCaptureService : Service() {
             ?: throw IllegalStateException("MediaProjection tidak tersedia")
 
         mediaProjection.registerCallback(
-            projectionCallback,
+            object : MediaProjection.Callback() {
+                override fun onStop() {
+                    capturing = false
+                    publishStatus("IZIN CAPTURE DIHENTIKAN")
+                    stopSelf()
+                }
+            },
             Handler(Looper.getMainLooper())
         )
 
@@ -153,7 +156,7 @@ class AudioCaptureService : Service() {
 
         val sampleRate = 48000
 
-        val audioFormat = AudioFormat.Builder()
+        val format = AudioFormat.Builder()
             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
             .setSampleRate(sampleRate)
             .setChannelMask(AudioFormat.CHANNEL_IN_STEREO)
@@ -166,13 +169,13 @@ class AudioCaptureService : Service() {
         )
 
         if (minBuffer <= 0) {
-            throw IllegalStateException("Buffer audio tidak valid")
+            throw IllegalStateException("Buffer audio tidak valid: $minBuffer")
         }
 
         val bufferSize = minBuffer * 2
 
         val recorder = AudioRecord.Builder()
-            .setAudioFormat(audioFormat)
+            .setAudioFormat(format)
             .setBufferSizeInBytes(bufferSize)
             .setAudioPlaybackCaptureConfig(captureConfig)
             .build()
@@ -190,34 +193,69 @@ class AudioCaptureService : Service() {
         }
 
         capturing = true
-        updateNotification("Audio capture aktif - PCM 48 kHz Stereo")
+        updateNotification("PCM 48 kHz Stereo berjalan")
+        publishStatus("CAPTURE AKTIF - MENUNGGU SINYAL")
 
         captureThread = Thread {
-            val pcmBuffer = ShortArray(bufferSize / 2)
+            val pcm = ShortArray(bufferSize / 2)
+            var lastUpdate = 0L
 
             while (capturing) {
                 val count = recorder.read(
-                    pcmBuffer,
-                    0,
-                    pcmBuffer.size,
-                    AudioRecord.READ_BLOCKING
+                    pcm, 0, pcm.size, AudioRecord.READ_BLOCKING
                 )
 
                 if (count > 0) {
-                    // Data PCM stereo 16-bit diterima di sini.
-                    // Tahap berikutnya akan menghubungkannya ke DSP.
+                    var leftSum = 0.0
+                    var rightSum = 0.0
+                    var frames = 0
+                    var i = 0
+
+                    while (i + 1 < count) {
+                        val left = pcm[i].toDouble() / 32768.0
+                        val right = pcm[i + 1].toDouble() / 32768.0
+
+                        leftSum += left * left
+                        rightSum += right * right
+                        frames++
+                        i += 2
+                    }
+
+                    val leftRms = if (frames > 0) {
+                        sqrt(leftSum / frames).toFloat()
+                    } else 0f
+
+                    val rightRms = if (frames > 0) {
+                        sqrt(rightSum / frames).toFloat()
+                    } else 0f
+
+                    val now = System.nanoTime()
+
+                    if (now - lastUpdate >= 100_000_000L) {
+                        val signal = leftRms > 0.002f || rightRms > 0.002f
+
+                        val message = if (signal) {
+                            "PCM STEREO TERDETEKSI"
+                        } else {
+                            "CAPTURE AKTIF - BELUM ADA SINYAL"
+                        }
+
+                        publishStatus(message, leftRms, rightRms)
+                        lastUpdate = now
+                    }
+
                 } else if (count < 0) {
                     Log.e(TAG, "AudioRecord read error: $count")
-                    break
+                    publishStatus("AUDIO READ ERROR: $count")
+                    capturing = false
                 }
             }
 
             Log.d(TAG, "Capture thread selesai")
+        }.apply {
+            name = "ASAudioPcmCapture"
+            start()
         }
-
-        captureThread?.start()
-
-        Log.d(TAG, "PCM capture started: 48000 Hz stereo")
     }
 
     private fun createNotificationChannel() {
@@ -228,11 +266,8 @@ class AudioCaptureService : Service() {
                 NotificationManager.IMPORTANCE_LOW
             )
 
-            val manager = getSystemService(
-                NotificationManager::class.java
-            )
-
-            manager.createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
         }
     }
 
@@ -247,11 +282,7 @@ class AudioCaptureService : Service() {
     }
 
     private fun updateNotification(message: String) {
-        val manager = getSystemService(
-            NotificationManager::class.java
-        )
-
-        manager.notify(
+        getSystemService(NotificationManager::class.java).notify(
             NOTIFICATION_ID,
             buildNotification(message)
         )
@@ -270,14 +301,12 @@ class AudioCaptureService : Service() {
 
         projection?.let {
             try {
-                it.unregisterCallback(projectionCallback)
                 it.stop()
             } catch (_: Exception) {
             }
         }
 
         projection = null
-
         super.onDestroy()
     }
 }
