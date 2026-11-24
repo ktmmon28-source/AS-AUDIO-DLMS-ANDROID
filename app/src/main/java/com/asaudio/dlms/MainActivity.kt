@@ -138,12 +138,12 @@ true
     .setNegativeButton("NANTI", null)
     .show()
     }
-private fun runPcmEngineTest() {
+private fun runPcmEngineTest(): Boolean {
     NativeDsp.stopTestTone()
 
     if (!NativeDsp.startPcmStream(48000)) {
         Toast.makeText(this, "PCM stream gagal dibuka", Toast.LENGTH_LONG).show()
-        return
+        return false
     }
 
     Toast.makeText(this, "Tes PCM stereo dimulai", Toast.LENGTH_SHORT).show()
@@ -199,7 +199,7 @@ private fun runPcmEngineTest() {
         } finally {
             NativeDsp.stopPcmStream()
         }
-    }, "ASAudioPcmTest").start()
+    }, "ASAudioPcmTest").start() return true
 }
     private fun registerCaptureReceiver() {
         val filter = IntentFilter(
