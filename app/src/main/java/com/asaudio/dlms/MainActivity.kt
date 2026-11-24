@@ -122,7 +122,8 @@ class MainActivity : Activity() {
     .setMessage("Jalankan tes suara stereo 440 Hz selama 2 detik?")
     .setPositiveButton("PUTAR TES") { _, _ ->
         val started = try {
-            NativeDsp.startTestTone()
+            runPcmEngineTest()
+true
         } catch (e: LinkageError) {
             Log.e("AS_AUDIO_DSP", "Test tone error", e)
             false
