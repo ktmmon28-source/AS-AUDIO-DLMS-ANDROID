@@ -9,12 +9,18 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.asaudio.dlms"
-        minSdk = 29
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+    applicationId = "com.asaudio.dlms"
+    minSdk = 29
+    targetSdk = 35
+    versionCode = 1
+    versionName = "1.0"
+
+    externalNativeBuild {
+        cmake {
+            arguments += "-DANDROID_STL=c++_shared"
+        }
     }
+}
 
     buildFeatures {
         prefab = true
