@@ -14,36 +14,43 @@
 body {
     margin: 0;
     min-height: 100vh;
+    padding: 20px;
     background: #080808;
     color: #eee;
     font-family: Arial, sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
 }
 
 .panel {
-    width: 90%;
+    width: 100%;
     max-width: 480px;
-    padding: 30px 20px;
+    padding: 25px 20px;
     background: #151515;
     border: 1px solid #333;
     border-top: 4px solid #e00000;
     border-radius: 12px;
+    text-align: center;
 }
 
 h1 {
     color: #f00000;
     letter-spacing: 3px;
+    margin-bottom: 5px;
 }
 
-p {
-    color: #aaa;
+h2 {
+    margin-top: 5px;
+}
+
+.subtitle {
+    color: #999;
+    font-size: 13px;
 }
 
 button {
-    margin-top: 25px;
+    margin-top: 22px;
     padding: 16px 22px;
     width: 100%;
     border: 0;
@@ -59,19 +66,86 @@ button:active {
 }
 
 .status {
-    margin-top: 24px;
+    margin-top: 22px;
+    padding: 12px;
+    background: #090909;
+    border: 1px solid #333;
+    border-radius: 8px;
     color: #00dd77;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.meters {
+    margin-top: 25px;
+    padding: 16px;
+    background: #0b0b0b;
+    border: 1px solid #333;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.meter-title {
+    margin-bottom: 18px;
+    color: #ddd;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.channel {
+    margin-top: 16px;
+}
+
+.channel-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 7px;
+    color: #ccc;
+    font-size: 13px;
+}
+
+.track {
+    height: 17px;
+    width: 100%;
+    background: #292929;
+    border: 1px solid #444;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(
+        90deg,
+        #00a84f,
+        #a6df00,
+        #ffb000,
+        #f00000
+    );
+    transition: width 0.1s linear;
+}
+
+.note {
+    margin-top: 14px;
+    color: #777;
+    font-size: 11px;
+    text-align: center;
 }
 </style>
 </head>
 
 <body>
 <div class="panel">
+
     <h1>AS AUDIO</h1>
     <h2>DLMS ANDROID</h2>
-    <p>Digital Loudspeaker Management System</p>
+    <p class="subtitle">
+        Digital Loudspeaker Management System
+    </p>
 
     <button onclick="testAudioCapture()">
         TEST AUDIO CAPTURE
@@ -80,6 +154,35 @@ button:active {
     <div class="status" id="status">
         ANDROID ENGINE READY
     </div>
+
+    <div class="meters">
+        <div class="meter-title">STEREO PCM MONITOR</div>
+
+        <div class="channel">
+            <div class="channel-head">
+                <span>LEFT CHANNEL (L)</span>
+                <span id="leftValue">0.000</span>
+            </div>
+            <div class="track">
+                <div class="bar" id="leftBar"></div>
+            </div>
+        </div>
+
+        <div class="channel">
+            <div class="channel-head">
+                <span>RIGHT CHANNEL (R)</span>
+                <span id="rightValue">0.000</span>
+            </div>
+            <div class="track">
+                <div class="bar" id="rightBar"></div>
+            </div>
+        </div>
+
+        <div class="note">
+            PCM 48 kHz • 16-BIT • STEREO
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -103,13 +206,33 @@ window.onCapturePermissionResult = function(granted) {
 
     if (granted) {
         status.textContent =
-            "IZIN CAPTURE DIBERIKAN";
+            "IZIN CAPTURE DIBERIKAN - MENUNGGU DATA PCM";
     } else {
-        status.textContent =
-            "IZIN CAPTURE DITOLAK";
+        status.textContent = "IZIN CAPTURE DITOLAK";
     }
+};
+
+window.onAudioCaptureUpdate = function(message, left, right) {
+    const status = document.getElementById("status");
+
+    const l = Math.max(0, Math.min(1, Number(left) || 0));
+    const r = Math.max(0, Math.min(1, Number(right) || 0));
+
+    status.textContent = message;
+
+    document.getElementById("leftValue").textContent =
+        l.toFixed(3);
+
+    document.getElementById("rightValue").textContent =
+        r.toFixed(3);
+
+    // Skala visual meter: RMS 0.20 ditampilkan sebagai 100%.
+    document.getElementById("leftBar").style.width =
+        Math.min(100, l * 500) + "%";
+
+    document.getElementById("rightBar").style.width =
+        Math.min(100, r * 500) + "%";
 };
 </script>
 </body>
 </html>
-
