@@ -9,9 +9,11 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -23,9 +25,12 @@ class MainActivity : Activity() {
     private lateinit var projectionManager: MediaProjectionManager
     private var receiverRegistered = false
 
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
+
     companion object {
         private const val REQUEST_CAPTURE_PERMISSION = 1001
         private const val REQUEST_AUDIO_PERMISSION = 1002
+        private const val REQUEST_FILE_PICKER = 1003
     }
 
     private val captureStatusReceiver = object : BroadcastReceiver() {
@@ -68,7 +73,36 @@ class MainActivity : Activity() {
         webView.addJavascriptInterface(AndroidBridge(), "Android")
 
         webView.webViewClient = WebViewClient()
-        webView.webChromeClient = WebChromeClient()
+
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                callback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+
+                filePathCallback?.onReceiveValue(null)
+                this@MainActivity.filePathCallback = callback
+
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "audio/*"
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                }
+
+                return try {
+                    startActivityForResult(
+                        intent,
+                        REQUEST_FILE_PICKER
+                    )
+                    true
+                } catch (e: Exception) {
+                    this@MainActivity.filePathCallback?.onReceiveValue(null)
+                    this@MainActivity.filePathCallback = null
+                    false
+                }
+            }
+        }
 
         setContentView(webView)
 
@@ -158,6 +192,33 @@ class MainActivity : Activity() {
     ) {
         super.onActivityResult(requestCode, resultCode, data)
 
+        if (requestCode == REQUEST_FILE_PICKER) {
+            val results: Array<Uri>? =
+                if (resultCode == RESULT_OK && data != null) {
+                    val clipData = data.clipData
+
+                    when {
+                        clipData != null -> {
+                            Array(clipData.itemCount) { index ->
+                                clipData.getItemAt(index).uri
+                            }
+                        }
+
+                        data.data != null -> {
+                            arrayOf(data.data!!)
+                        }
+
+                        else -> null
+                    }
+                } else {
+                    null
+                }
+
+            filePathCallback?.onReceiveValue(results)
+            filePathCallback = null
+            return
+        }
+
         if (requestCode == REQUEST_CAPTURE_PERMISSION) {
             if (resultCode == RESULT_OK && data != null) {
                 try {
@@ -188,6 +249,9 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        filePathCallback?.onReceiveValue(null)
+        filePathCallback = null
+
         if (receiverRegistered) {
             unregisterReceiver(captureStatusReceiver)
             receiverRegistered = false
