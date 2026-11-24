@@ -123,7 +123,6 @@ class MainActivity : Activity() {
     .setPositiveButton("PUTAR TES") { _, _ ->
         val started = try {
             runPcmEngineTest()
-true
         } catch (e: LinkageError) {
             Log.e("AS_AUDIO_DSP", "Test tone error", e)
             false
@@ -199,7 +198,9 @@ private fun runPcmEngineTest(): Boolean {
         } finally {
             NativeDsp.stopPcmStream()
         }
-    }, "ASAudioPcmTest").start() return true
+    }, "ASAudioPcmTest").start()
+
+return true
 }
     private fun registerCaptureReceiver() {
         val filter = IntentFilter(
