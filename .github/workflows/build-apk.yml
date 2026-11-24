@@ -1,9 +1,11 @@
+
 name: Build AS AUDIO DLMS APK
 
 on:
   push:
     branches:
       - main
+      - stage3-native-dsp-foundation
   workflow_dispatch:
 
 permissions:
@@ -33,8 +35,9 @@ jobs:
         with:
           packages: platform-tools
 
-      - name: Install Android SDK
-        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android SDK, NDK and CMake
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Build APK
         run: gradle assembleDebug
