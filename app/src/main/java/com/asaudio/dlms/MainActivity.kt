@@ -1,8 +1,10 @@
 
 package com.asaudio.dlms
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.webkit.JavascriptInterface
@@ -15,10 +17,9 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var projectionManager: MediaProjectionManager
 
-    private var projectionPermissionData: Intent? = null
-
     companion object {
         private const val REQUEST_CAPTURE_PERMISSION = 1001
+        private const val REQUEST_AUDIO_PERMISSION = 1002
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,12 +49,50 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun requestAudioCapture() {
             runOnUiThread {
-                val captureIntent =
-                    projectionManager.createScreenCaptureIntent()
+                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED
+                ) {
+                    requestPermissions(
+                        arrayOf(Manifest.permission.RECORD_AUDIO),
+                        REQUEST_AUDIO_PERMISSION
+                    )
+                } else {
+                    requestProjectionPermission()
+                }
+            }
+        }
+    }
 
-                startActivityForResult(
-                    captureIntent,
-                    REQUEST_CAPTURE_PERMISSION
+    private fun requestProjectionPermission() {
+        val captureIntent =
+            projectionManager.createScreenCaptureIntent()
+
+        startActivityForResult(
+            captureIntent,
+            REQUEST_CAPTURE_PERMISSION
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults
+        )
+
+        if (requestCode == REQUEST_AUDIO_PERMISSION) {
+            if (grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+            ) {
+                requestProjectionPermission()
+            } else {
+                webView.evaluateJavascript(
+                    "window.onCapturePermissionResult(false);",
+                    null
                 )
             }
         }
@@ -70,16 +109,26 @@ class MainActivity : Activity() {
         if (requestCode == REQUEST_CAPTURE_PERMISSION) {
 
             if (resultCode == RESULT_OK && data != null) {
-                projectionPermissionData = data
+                try {
+                    AudioCaptureService.start(
+                        this,
+                        resultCode,
+                        data
+                    )
 
-                webView.evaluateJavascript(
-                    "window.onCapturePermissionResult(true);",
-                    null
-                )
+                    webView.evaluateJavascript(
+                        "window.onCapturePermissionResult(true);",
+                        null
+                    )
+
+                } catch (e: Exception) {
+                    webView.evaluateJavascript(
+                        "window.onCapturePermissionResult(false);",
+                        null
+                    )
+                }
 
             } else {
-                projectionPermissionData = null
-
                 webView.evaluateJavascript(
                     "window.onCapturePermissionResult(false);",
                     null
