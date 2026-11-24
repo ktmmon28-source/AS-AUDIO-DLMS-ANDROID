@@ -7,5 +7,7 @@ object NativeDsp {
         System.loadLibrary("as_audio_dsp")
     }
 
-    external fun getEngineStatus(): String
+    external fun getEngineStatus(): string
+    external fun startTestTone(): Boolean
+    external fun stopTestTone()
 }
