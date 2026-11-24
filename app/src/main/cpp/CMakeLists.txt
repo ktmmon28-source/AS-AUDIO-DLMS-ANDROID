@@ -12,6 +12,7 @@ add_library(
     as_audio_dsp
     SHARED
     native-lib.cpp
+    pcm-engine.cpp
 )
 
 target_link_libraries(
