@@ -404,11 +404,114 @@ window.onCapturePermissionResult = function(granted) {
         : "IZIN CAPTURE DITOLAK";
 };
 
+// ===== MP3 STEREO ANALYZER =====
+let mp3AudioContext = null;
+let mp3SourceNode = null;
+let mp3LeftAnalyser = null;
+let mp3RightAnalyser = null;
+let mp3MeterTimer = null;
+let mp3MeterActive = false;
+
+function startMp3StereoMeter() {
+    try {
+        if (!mp3AudioContext) {
+            const AudioContextClass =
+                window.AudioContext || window.webkitAudioContext;
+
+            if (!AudioContextClass) {
+                document.getElementById("playerStatus").textContent =
+                    "Browser tidak mendukung audio analyzer";
+                return;
+            }
+
+            mp3AudioContext = new AudioContextClass();
+
+            mp3SourceNode =
+                mp3AudioContext.createMediaElementSource(audioPlayer);
+
+            const splitter =
+                mp3AudioContext.createChannelSplitter(2);
+
+            mp3LeftAnalyser = mp3AudioContext.createAnalyser();
+            mp3RightAnalyser = mp3AudioContext.createAnalyser();
+
+            mp3LeftAnalyser.fftSize = 1024;
+            mp3RightAnalyser.fftSize = 1024;
+
+            mp3SourceNode.connect(splitter);
+            splitter.connect(mp3LeftAnalyser, 0);
+            splitter.connect(mp3RightAnalyser, 1);
+
+            // Menjaga suara MP3 tetap keluar seperti sebelumnya
+            mp3SourceNode.connect(mp3AudioContext.destination);
+        }
+
+        mp3AudioContext.resume().then(() => {
+            mp3MeterActive = true;
+
+            if (mp3MeterTimer) clearInterval(mp3MeterTimer);
+
+            const leftData =
+                new Float32Array(mp3LeftAnalyser.fftSize);
+            const rightData =
+                new Float32Array(mp3RightAnalyser.fftSize);
+
+            mp3MeterTimer = setInterval(() => {
+                if (!mp3MeterActive) return;
+
+                mp3LeftAnalyser.getFloatTimeDomainData(leftData);
+                mp3RightAnalyser.getFloatTimeDomainData(rightData);
+
+                let leftSum = 0;
+                let rightSum = 0;
+
+                for (let i = 0; i < leftData.length; i++) {
+                    leftSum += leftData[i] * leftData[i];
+                    rightSum += rightData[i] * rightData[i];
+                }
+
+                const l = Math.sqrt(leftSum / leftData.length);
+                const r = Math.sqrt(rightSum / rightData.length);
+
+                document.getElementById("leftValue").textContent =
+                    l.toFixed(3);
+                document.getElementById("rightValue").textContent =
+                    r.toFixed(3);
+
+                document.getElementById("leftBar").style.width =
+                    Math.min(100, l * 500) + "%";
+
+                document.getElementById("rightBar").style.width =
+                    Math.min(100, r * 500) + "%";
+            }, 80);
+        });
+
+    } catch (error) {
+        document.getElementById("playerStatus").textContent =
+            "Analyzer MP3: " + error.message;
+    }
+}
+
+function stopMp3StereoMeter() {
+    mp3MeterActive = false;
+
+    if (mp3MeterTimer) {
+        clearInterval(mp3MeterTimer);
+        mp3MeterTimer = null;
+    }
+}
+
+audioPlayer.addEventListener("play", startMp3StereoMeter);
+audioPlayer.addEventListener("pause", stopMp3StereoMeter);
+audioPlayer.addEventListener("ended", stopMp3StereoMeter);
+// ===== END MP3 STEREO ANALYZER =====
+
 window.onAudioCaptureUpdate = function(message, left, right) {
     const l = Math.max(0, Math.min(1, Number(left) || 0));
     const r = Math.max(0, Math.min(1, Number(right) || 0));
 
     document.getElementById("status").textContent = message;
+    if (mp3MeterActive) return;
     document.getElementById("leftValue").textContent = l.toFixed(3);
     document.getElementById("rightValue").textContent = r.toFixed(3);
 
