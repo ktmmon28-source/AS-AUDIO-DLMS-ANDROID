@@ -1,7 +1,7 @@
 
 #include <jni.h>
 #include <oboe/Oboe.h>
-
+#include <android/log.h>
 #include <algorithm>
 #include <cmath>
 #include <array>
@@ -64,6 +64,12 @@ public:
 
         const int32_t framesToWrite = static_cast<int32_t>(
                 std::min<uint64_t>(inputFrames, available));
+        __android_log_print(
+        ANDROID_LOG_INFO,
+        "AS_AUDIO_METER",
+        "sampleCount=%d channels=%d inputFrames=%d framesToWrite=%d",
+        sampleCount, channels, inputFrames, framesToWrite
+);
         float leftSum = 0.0f;
         float rightSum = 0.0f;
         for (int32_t i = 0; i < framesToWrite; ++i) {
