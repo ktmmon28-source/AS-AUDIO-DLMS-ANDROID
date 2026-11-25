@@ -3,6 +3,7 @@
 #include <oboe/Oboe.h>
 
 #include <algorithm>
+#include <cmath>
 #include <array>
 #include <atomic>
 #include <cstdint>
@@ -73,11 +74,22 @@ public:
             const float right = channels == 2
                     ? static_cast<float>(samples[i * 2 + 1]) / 32768.0f
                     : left;
-
+leftSum += left * left;
+rightSum += right * right;
             mBuffer[index * 2] = left;
             mBuffer[index * 2 + 1] = right;
         }
+if (framesToWrite > 0) {
+    mLeftLevel.store(
+            std::sqrt(leftSum / framesToWrite),
+            std::memory_order_relaxed
+    );
 
+    mRightLevel.store(
+            std::sqrt(rightSum / framesToWrite),
+            std::memory_order_relaxed
+    );
+}
         mWriteFrame.store(
                 writeFrame + framesToWrite,
                 std::memory_order_release
@@ -121,7 +133,8 @@ float rightLevel() const {
         const uint64_t available = writeFrame - readFrame;
         const int32_t framesToRead = static_cast<int32_t>(
                 std::min<uint64_t>(available, numFrames));
-
+        float leftSum = 0.0f;
+        float rightSum = 0.0f;
         for (int32_t i = 0; i < framesToRead; ++i) {
             const uint64_t index = (readFrame + i) & kMask;
 
@@ -223,4 +236,19 @@ Java_com_asaudio_dlms_NativeDsp_stopPcmStream(
         JNIEnv*,
         jobject) {
     gPcmEngine.stop();
+}
+extern "C"
+JNIEXPORT jfloat JNICALL
+Java_com_asaudio_dlms_NativeDsp_getPcmLeftLevel(
+        JNIEnv*,
+        jobject) {
+    return gPcmEngine.leftLevel();
+}
+
+extern "C"
+JNIEXPORT jfloat JNICALL
+Java_com_asaudio_dlms_NativeDsp_getPcmRightLevel(
+        JNIEnv*,
+        jobject) {
+    return gPcmEngine.rightLevel();
 }
