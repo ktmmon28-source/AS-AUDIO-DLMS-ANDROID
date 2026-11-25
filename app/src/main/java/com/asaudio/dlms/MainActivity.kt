@@ -231,12 +231,13 @@ private fun playNativeMp3(index: Int) {
 
     nativeMp3CurrentIndex = index
 
-    nativeMp3Player.stop()
-
     val uri = nativeMp3Uris[index]
 
-    nativeMp3Player.play(uri)
+    Thread({
+        nativeMp3Player.play(uri)
+    }, "ASAudio-MP3-Control").start()
 }
+
 
 private fun pauseNativeMp3() {
     nativeMp3Player.pause()
