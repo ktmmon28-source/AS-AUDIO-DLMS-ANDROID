@@ -64,7 +64,8 @@ public:
 
         const int32_t framesToWrite = static_cast<int32_t>(
                 std::min<uint64_t>(inputFrames, available));
-
+        float leftSum = 0.0f;
+        float rightSum = 0.0f;
         for (int32_t i = 0; i < framesToWrite; ++i) {
             const uint64_t index = (writeFrame + i) & kMask;
 
