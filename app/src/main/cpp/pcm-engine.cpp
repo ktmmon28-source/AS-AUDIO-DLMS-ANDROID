@@ -94,7 +94,13 @@ public:
 
         return static_cast<int64_t>(writeFrame - readFrame);
     }
+    float leftLevel() const {
+    return mLeftLevel.load(std::memory_order_relaxed);
+}
 
+float rightLevel() const {
+    return mRightLevel.load(std::memory_order_relaxed);
+}
     void stop() {
         std::lock_guard<std::mutex> lock(mMutex);
         closeLocked();
@@ -144,7 +150,8 @@ private:
 
     std::atomic<uint64_t> mReadFrame{0};
     std::atomic<uint64_t> mWriteFrame{0};
-
+    std::atomic<float> mLeftLevel{0.0f};
+    std::atomic<float> mRightLevel{0.0f};
     std::shared_ptr<oboe::AudioStream> mStream;
     std::mutex mMutex;
 
