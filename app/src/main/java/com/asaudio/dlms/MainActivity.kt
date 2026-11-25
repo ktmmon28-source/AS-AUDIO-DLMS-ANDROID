@@ -455,15 +455,17 @@ return
     }
 
     override fun onDestroy() {
-        filePathCallback?.onReceiveValue(null)
-        filePathCallback = null
+    nativeMp3Player.stop()
 
-        if (receiverRegistered) {
-            unregisterReceiver(captureStatusReceiver)
-            receiverRegistered = false
-        }
+    filePathCallback?.onReceiveValue(null)
+    filePathCallback = null
 
-        super.onDestroy()
+    if (receiverRegistered) {
+        unregisterReceiver(captureStatusReceiver)
+        receiverRegistered = false
+    }
+
+    super.onDestroy()
     }
 
     override fun onBackPressed() {
