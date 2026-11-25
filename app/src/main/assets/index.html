@@ -281,7 +281,34 @@ const filePicker = document.getElementById("filePicker");
 
 let tracks = [];
 let currentTrack = -1;
+window.onNativeMp3Status = function(message) {
+    const status = document.getElementById("playerStatus");
+    const button = document.getElementById("playButton");
 
+    status.textContent = message;
+
+    if (message === "Native MP3 berjalan" ||
+        message === "MP3 dilanjutkan") {
+        button.textContent = "⏸ PAUSE";
+    }
+
+    if (message === "MP3 dijeda" ||
+        message === "MP3 selesai" ||
+        message === "Native MP3 berhenti") {
+        button.textContent = "▶ PLAY";
+    }
+
+    if (message === "MP3 selesai") {
+        nextTrack();
+    }
+};
+
+window.onNativeMp3Error = function(message) {
+    document.getElementById("playerStatus").textContent =
+        "Native MP3 Error: " + message;
+
+    document.getElementById("playButton").textContent = "▶ PLAY";
+};
 filePicker.addEventListener("change", function() {
     const files = Array.from(this.files || []);
 
@@ -323,21 +350,26 @@ function loadTrack(index, autoPlay) {
     if (index < 0 || index >= tracks.length) return;
 
     currentTrack = index;
-    audioPlayer.src = tracks[index].url;
-    audioPlayer.load();
+
+    audioPlayer.pause();
 
     document.getElementById("nowPlaying").textContent =
         tracks[index].name;
 
-    document.getElementById("playButton").textContent = "▶ PLAY";
+    document.getElementById("playButton").textContent = "⏸ PAUSE";
 
     renderPlaylist();
 
     if (autoPlay) {
-        audioPlayer.play().catch(() => {
+        if (window.Android && Android.playMp3) {
             document.getElementById("playerStatus").textContent =
-                "Tekan PLAY untuk memulai lagu";
-        });
+                "Memulai Native MP3...";
+
+            Android.playMp3(index);
+        } else {
+            document.getElementById("playerStatus").textContent =
+                "Native Android tidak tersedia";
+        }
     }
 }
 
@@ -348,12 +380,22 @@ function togglePlayback() {
         return;
     }
 
-    if (audioPlayer.paused) {
-        audioPlayer.play().catch(() => {});
+    const playButton = document.getElementById("playButton");
+
+    if (playButton.textContent.includes("PAUSE")) {
+        Android.pauseMp3();
+
+        playButton.textContent = "▶ PLAY";
+        document.getElementById("playerStatus").textContent =
+            "Lagu dijeda";
     } else {
-        audioPlayer.pause();
+        Android.resumeMp3();
+
+        playButton.textContent = "⏸ PAUSE";
+        document.getElementById("playerStatus").textContent =
+            "Lagu dilanjutkan";
     }
-}
+    }
 
 function nextTrack() {
     if (!tracks.length) return;
@@ -368,21 +410,6 @@ function previousTrack() {
     );
 }
 
-audioPlayer.addEventListener("play", function() {
-    document.getElementById("playButton").textContent = "⏸ PAUSE";
-    document.getElementById("playerStatus").textContent = "Lagu sedang diputar";
-});
-
-audioPlayer.addEventListener("pause", function() {
-    document.getElementById("playButton").textContent = "▶ PLAY";
-});
-
-audioPlayer.addEventListener("ended", nextTrack);
-
-audioPlayer.addEventListener("error", function() {
-    document.getElementById("playerStatus").textContent =
-        "File tidak dapat diputar";
-});
 
 function testAudioCapture() {
     if (window.Android &&
