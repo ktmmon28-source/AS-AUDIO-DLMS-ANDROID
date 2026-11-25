@@ -22,4 +22,6 @@ object NativeDsp {
     external fun getPcmQueuedFrames(): Long
 
     external fun stopPcmStream()
+    external fun getPcmLeftLevel(): Float
+external fun getPcmRightLevel(): Float
 }
