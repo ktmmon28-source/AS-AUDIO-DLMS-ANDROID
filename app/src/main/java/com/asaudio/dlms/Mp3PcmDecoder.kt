@@ -5,7 +5,7 @@ import android.content.Context
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
-
+import java.nio.ByteOrder
 data class Mp3AudioInfo(
     val mime: String,
     val sampleRate: Int,
@@ -54,7 +54,7 @@ class Mp3PcmDecoder(
     }
     
 fun decodeToPcm(
-    onPcm: (ByteArray, Int, Int, Int, Int) -> Unit
+    onPcm: (ShortArray, Int, Int, Int, Int) -> Unit
 ) {
     val extractor = MediaExtractor()
     var codec: MediaCodec? = null
@@ -136,15 +136,24 @@ fun decodeToPcm(
                     buffer.position(info.offset)
                     buffer.limit(info.offset + info.size)
 
-                    val pcm = ByteArray(info.size)
-                    buffer.get(pcm)
+                    val pcmBytes = ByteArray(info.size)
+buffer.get(pcmBytes)
 
-                    onPcm(
-                        pcm,
-                        0,
-                        pcm.size,
-                        sampleRate,
-                        channels
+val sampleCount = pcmBytes.size / 2
+val pcmSamples = ShortArray(sampleCount)
+
+java.nio.ByteBuffer.wrap(pcmBytes)
+    .order(ByteOrder.LITTLE_ENDIAN)
+    .asShortBuffer()
+    .get(pcmSamples)
+
+onPcm(
+    pcmSamples,
+    0,
+    sampleCount,
+    sampleRate,
+    channels
+)
                     )
                 }
 
