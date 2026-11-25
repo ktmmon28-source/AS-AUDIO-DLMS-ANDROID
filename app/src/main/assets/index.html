@@ -293,10 +293,9 @@ window.onNativeMp3Status = function(message) {
     }
 
     if (message === "MP3 dijeda" ||
-        message === "MP3 selesai" ||
-        message === "Native MP3 berhenti") {
-        button.textContent = "▶ PLAY";
-    }
+    message === "MP3 selesai") {
+    button.textContent = "▶ PLAY";
+        }
 
     if (message === "MP3 selesai") {
         nextTrack();
