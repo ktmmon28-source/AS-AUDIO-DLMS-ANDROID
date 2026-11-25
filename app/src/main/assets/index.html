@@ -365,6 +365,7 @@ function loadTrack(index, autoPlay) {
                 "Memulai Native MP3...";
 
             Android.playMp3(index);
+            startNativeMp3StereoMeter();
         } else {
             document.getElementById("playerStatus").textContent =
                 "Native Android tidak tersedia";
@@ -383,13 +384,13 @@ function togglePlayback() {
 
     if (playButton.textContent.includes("PAUSE")) {
         Android.pauseMp3();
-
+        stopNativeMp3StereoMeter();
         playButton.textContent = "▶ PLAY";
         document.getElementById("playerStatus").textContent =
             "Lagu dijeda";
     } else {
         Android.resumeMp3();
-
+        startNativeMp3StereoMeter();
         playButton.textContent = "⏸ PAUSE";
         document.getElementById("playerStatus").textContent =
             "Lagu dilanjutkan";
@@ -526,7 +527,43 @@ function stopMp3StereoMeter() {
         mp3MeterTimer = null;
     }
 }
+let nativeMp3MeterTimer = null;
 
+function startNativeMp3StereoMeter() {
+    if (nativeMp3MeterTimer) {
+        clearInterval(nativeMp3MeterTimer);
+    }
+
+    nativeMp3MeterTimer = setInterval(() => {
+        if (!window.Android ||
+            !Android.getMp3LeftLevel ||
+            !Android.getMp3RightLevel) {
+            return;
+        }
+
+        const l = Android.getMp3LeftLevel();
+        const r = Android.getMp3RightLevel();
+
+        document.getElementById("leftValue").textContent =
+            l.toFixed(3);
+
+        document.getElementById("rightValue").textContent =
+            r.toFixed(3);
+
+        document.getElementById("leftBar").style.width =
+            Math.min(100, l * 500) + "%";
+
+        document.getElementById("rightBar").style.width =
+            Math.min(100, r * 500) + "%";
+    }, 80);
+}
+
+function stopNativeMp3StereoMeter() {
+    if (nativeMp3MeterTimer) {
+        clearInterval(nativeMp3MeterTimer);
+        nativeMp3MeterTimer = null;
+    }
+}
 audioPlayer.addEventListener("play", startMp3StereoMeter);
 audioPlayer.addEventListener("pause", stopMp3StereoMeter);
 audioPlayer.addEventListener("ended", stopMp3StereoMeter);
