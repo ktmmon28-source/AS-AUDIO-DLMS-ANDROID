@@ -23,6 +23,10 @@ import android.app.AlertDialog
 class MainActivity : Activity() {
 
     private lateinit var webView: WebView
+    private lateinit var nativeMp3Player: Mp3NativePlayer
+
+private var nativeMp3Uris = mutableListOf<Uri>()
+private var nativeMp3CurrentIndex = -1
     private lateinit var projectionManager: MediaProjectionManager
     private var receiverRegistered = false
 
@@ -71,9 +75,27 @@ class MainActivity : Activity() {
         }
         projectionManager =
             getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-
+        
         webView = WebView(this)
-
+        nativeMp3Player = Mp3NativePlayer(
+    context = this,
+    onStatus = { message ->
+        runOnUiThread {
+            webView.evaluateJavascript(
+                "window.onNativeMp3Status(${JSONObject.quote(message)});",
+                null
+            )
+        }
+    },
+    onError = { message ->
+        runOnUiThread {
+            webView.evaluateJavascript(
+                "window.onNativeMp3Error(${JSONObject.quote(message)});",
+                null
+            )
+        }
+    }
+)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.mediaPlaybackRequiresUserGesture = false
@@ -202,6 +224,50 @@ private fun runPcmEngineTest(): Boolean {
 
 return true
 }
+private fun playNativeMp3(index: Int) {
+    if (index < 0 || index >= nativeMp3Uris.size) {
+        return
+    }
+
+    nativeMp3CurrentIndex = index
+
+    nativeMp3Player.stop()
+
+    val uri = nativeMp3Uris[index]
+
+    nativeMp3Player.play(uri)
+}
+
+private fun pauseNativeMp3() {
+    nativeMp3Player.pause()
+}
+
+private fun resumeNativeMp3() {
+    nativeMp3Player.resume()
+}
+
+private fun stopNativeMp3() {
+    nativeMp3Player.stop()
+}
+
+private fun nextNativeMp3() {
+    if (nativeMp3Uris.isEmpty()) return
+
+    val nextIndex =
+        (nativeMp3CurrentIndex + 1) % nativeMp3Uris.size
+
+    playNativeMp3(nextIndex)
+}
+
+private fun previousNativeMp3() {
+    if (nativeMp3Uris.isEmpty()) return
+
+    val previousIndex =
+        (nativeMp3CurrentIndex - 1 + nativeMp3Uris.size) %
+        nativeMp3Uris.size
+
+    playNativeMp3(previousIndex)
+}
     private fun registerCaptureReceiver() {
         val filter = IntentFilter(
             AudioCaptureService.ACTION_CAPTURE_STATUS
@@ -304,10 +370,25 @@ return true
                 } else {
                     null
                 }
+    if (results != null) {
+    nativeMp3Uris.clear()
+    nativeMp3Uris.addAll(results)
+    nativeMp3CurrentIndex = 0
 
-            filePathCallback?.onReceiveValue(results)
-            filePathCallback = null
-            return
+    results.forEach { uri ->
+        try {
+            contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        } catch (_: Exception) {
+        }
+    }
+}
+
+filePathCallback?.onReceiveValue(results)
+filePathCallback = null
+return
         }
 
         if (requestCode == REQUEST_CAPTURE_PERMISSION) {
