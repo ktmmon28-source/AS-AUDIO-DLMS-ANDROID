@@ -54,6 +54,7 @@ class Mp3PcmDecoder(
     }
     
 fun decodeToPcm(
+    shouldStop: () -> Boolean = { false },
     onPcm: (ShortArray, Int, Int, Int, Int) -> Unit
 ) {
     val extractor = MediaExtractor()
@@ -96,7 +97,7 @@ fun decodeToPcm(
         var inputDone = false
         var outputDone = false
 
-        while (!outputDone) {
+        while (!outputDone && !shouldStop()) {
 
             if (!inputDone) {
                 val inputIndex = codec.dequeueInputBuffer(10000)
