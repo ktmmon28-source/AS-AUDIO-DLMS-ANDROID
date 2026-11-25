@@ -21,13 +21,33 @@ class Mp3NativePlayer(
     private val pauseLock = Object()
 
     fun play(uri: Uri) {
-        if (worker?.isAlive == true) {
-            onError("Pemutaran masih berjalan")
+    val previousWorker = worker
+
+    if (previousWorker?.isAlive == true) {
+        stopRequested.set(true)
+
+        synchronized(pauseLock) {
+            paused.set(false)
+            pauseLock.notifyAll()
+        }
+
+        previousWorker.interrupt()
+
+        try {
+            previousWorker.join(3000)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
             return
         }
 
-        stopRequested.set(false)
-        paused.set(false)
+        if (previousWorker.isAlive) {
+            onError("Lagu sebelumnya belum berhenti")
+            return
+        }
+    }
+
+    stopRequested.set(false)
+    paused.set(false)
 
         worker = Thread {
             var streamStarted = false
