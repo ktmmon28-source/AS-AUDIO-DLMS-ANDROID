@@ -1,7 +1,6 @@
 
 package com.asaudio.dlms
 import android.media.MediaCodec
-import android.media.MediaFormat
 import android.content.Context
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -62,7 +61,7 @@ fun decodeToPcm(
     var started = false
 
     try {
-        extractor.setDataSource(context, uri)
+        extractor.setDataSource(context, uri, null)
 
         var trackIndex = -1
         var format: MediaFormat? = null
