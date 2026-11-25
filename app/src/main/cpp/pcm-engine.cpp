@@ -114,10 +114,13 @@ float rightLevel() const {
     return mRightLevel.load(std::memory_order_relaxed);
 }
     void stop() {
-        std::lock_guard<std::mutex> lock(mMutex);
-        closeLocked();
-    }
+    std::lock_guard<std::mutex> lock(mMutex);
 
+    mLeftLevel.store(0.0f, std::memory_order_relaxed);
+    mRightLevel.store(0.0f, std::memory_order_relaxed);
+
+    closeLocked();
+    }
     oboe::DataCallbackResult onAudioReady(
             oboe::AudioStream*,
             void* audioData,
@@ -133,8 +136,7 @@ float rightLevel() const {
         const uint64_t available = writeFrame - readFrame;
         const int32_t framesToRead = static_cast<int32_t>(
                 std::min<uint64_t>(available, numFrames));
-        float leftSum = 0.0f;
-        float rightSum = 0.0f;
+        
         for (int32_t i = 0; i < framesToRead; ++i) {
             const uint64_t index = (readFrame + i) & kMask;
 
