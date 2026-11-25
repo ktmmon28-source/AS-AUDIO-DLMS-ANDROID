@@ -339,7 +339,15 @@ fun previousMp3() {
             }
         }
     }
+  @JavascriptInterface
+fun getMp3LeftLevel(): Float {
+    return NativeDsp.getPcmLeftLevel()
+}
 
+@JavascriptInterface
+fun getMp3RightLevel(): Float {
+    return NativeDsp.getPcmRightLevel()
+}
     private fun requestProjectionPermission() {
         val captureIntent =
             projectionManager.createScreenCaptureIntent()
