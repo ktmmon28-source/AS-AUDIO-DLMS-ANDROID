@@ -288,7 +288,40 @@ private fun previousNativeMp3() {
     }
 
     inner class AndroidBridge {
+    @JavascriptInterface
+fun playMp3(index: Int) {
+    runOnUiThread {
+        playNativeMp3(index)
+    }
+}
 
+@JavascriptInterface
+fun pauseMp3() {
+    runOnUiThread {
+        pauseNativeMp3()
+    }
+}
+
+@JavascriptInterface
+fun resumeMp3() {
+    runOnUiThread {
+        resumeNativeMp3()
+    }
+}
+
+@JavascriptInterface
+fun nextMp3() {
+    runOnUiThread {
+        nextNativeMp3()
+    }
+}
+
+@JavascriptInterface
+fun previousMp3() {
+    runOnUiThread {
+        previousNativeMp3()
+    }
+}
         @JavascriptInterface
         fun requestAudioCapture() {
             runOnUiThread {
