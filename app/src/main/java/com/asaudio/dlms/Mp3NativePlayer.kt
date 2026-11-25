@@ -46,7 +46,9 @@ class Mp3NativePlayer(
                 streamStarted = true
                 onStatus("Native MP3 berjalan")
 
-                decoder.decodeToPcm { samples, initialOffset, sampleCount, sampleRate, channels ->
+                decoder.decodeToPcm(
+    shouldStop = { stopRequested.get() }
+) { samples, initialOffset, sampleCount, sampleRate, channels ->
 
                     if (sampleRate != audioInfo.sampleRate) {
                         throw IllegalStateException(
