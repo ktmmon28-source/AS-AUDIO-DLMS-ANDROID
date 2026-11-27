@@ -436,6 +436,7 @@ h2 {
 <div class="panel">
 
     <h1>AS AUDIO</h1>
+    <div id="homeScreen">
     <h2>DLMS ANDROID</h2>
     <p class="subtitle">Digital Loudspeaker Management System</p>
   <div class="section">
@@ -471,38 +472,6 @@ h2 {
   </div>
     <div class="section">
         <div class="section-title">LOCAL MP3 PLAYER</div>
-
-        <div class="now-playing" id="nowPlaying">
-            BELUM ADA LAGU DIPILIH
-        </div>
-
-        <label class="file-label" for="filePicker">
-            + PILIH FILE MP3 DARI HP
-        </label>
-
-        <input
-            type="file"
-            id="filePicker"
-            accept=".mp3,audio/mpeg,audio/*"
-            multiple
-        >
-
-        <audio id="audioPlayer" controls preload="metadata"></audio>
-
-        <div class="player-controls">
-            <button onclick="previousTrack()">⏮ PREV</button>
-            <button onclick="togglePlayback()" id="playButton">▶ PLAY</button>
-            <button onclick="nextTrack()">NEXT ⏭</button>
-        </div>
-
-        <div class="small-status" id="playerStatus">
-            Playlist kosong
-        </div>
-
-        <div class="playlist" id="playlist"></div>
-    </div>
-  <!-- ===== AS AUDIO INPUT PANEL ===== -->
-<div class="section" id="inputPanel">
 
     <div class="section-title">INPUT GAIN CONTROL</div>
 
