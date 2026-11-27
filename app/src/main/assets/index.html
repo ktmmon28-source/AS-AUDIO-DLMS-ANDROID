@@ -985,6 +985,71 @@ window.onAudioCaptureUpdate = function(message, left, right) {
     document.getElementById("rightBar").style.width =
         Math.min(100, r * 500) + "%";
 };
+    // ===== AS AUDIO INPUT FADER UI =====
+(() => {
+    const faderL = document.getElementById("inputGainL");
+    const faderR = document.getElementById("inputGainR");
+    const valueL = document.getElementById("inputGainLValue");
+    const valueR = document.getElementById("inputGainRValue");
+    const muteL = document.getElementById("inputMuteL");
+    const muteR = document.getElementById("inputMuteR");
+    const linkButton = document.getElementById("inputLink");
+
+    if (!faderL || !faderR) return;
+
+    let linked = false;
+    let mutedL = false;
+    let mutedR = false;
+
+    function updateValue(fader, display) {
+        display.textContent = Number(fader.value).toFixed(1) + " dB";
+    }
+
+    faderL.addEventListener("input", () => {
+        updateValue(faderL, valueL);
+
+        if (linked) {
+            faderR.value = faderL.value;
+            updateValue(faderR, valueR);
+        }
+    });
+
+    faderR.addEventListener("input", () => {
+        updateValue(faderR, valueR);
+
+        if (linked) {
+            faderL.value = faderR.value;
+            updateValue(faderL, valueL);
+        }
+    });
+
+    muteL.addEventListener("click", () => {
+        mutedL = !mutedL;
+        muteL.classList.toggle("active", mutedL);
+        muteL.textContent = mutedL ? "UNMUTE L" : "MUTE L";
+    });
+
+    muteR.addEventListener("click", () => {
+        mutedR = !mutedR;
+        muteR.classList.toggle("active", mutedR);
+        muteR.textContent = mutedR ? "UNMUTE R" : "MUTE R";
+    });
+
+    linkButton.addEventListener("click", () => {
+        linked = !linked;
+        linkButton.textContent = linked ? "LINK L/R : ON" : "LINK L/R : OFF";
+        linkButton.classList.toggle("active", linked);
+
+        if (linked) {
+            faderR.value = faderL.value;
+            updateValue(faderR, valueR);
+        }
+    });
+
+    updateValue(faderL, valueL);
+    updateValue(faderR, valueR);
+})();
+// ===== END INPUT FADER UI =====
 </script>
 </body>
 </html>
