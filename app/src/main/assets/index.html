@@ -501,7 +501,99 @@ h2 {
 
         <div class="playlist" id="playlist"></div>
     </div>
+  <!-- ===== AS AUDIO INPUT PANEL ===== -->
+<div class="section" id="inputPanel">
 
+    <div class="section-title">INPUT GAIN CONTROL</div>
+
+    <div class="input-fader-panel">
+
+        <!-- LEFT CHANNEL -->
+        <div class="input-channel">
+            <div class="section-title">INPUT LEFT (L)</div>
+
+            <div class="input-meter">
+                <div class="input-meter-fill" id="inputMeterL"></div>
+            </div>
+
+            <div class="input-fader-value" id="inputGainLValue">
+                0.0 dB
+            </div>
+
+            <div class="input-fader-wrap">
+                <div class="input-db-scale">
+                    <span>+12</span>
+                    <span>0</span>
+                    <span>-20</span>
+                    <span>-40</span>
+                    <span>-60</span>
+                </div>
+
+                <input
+                    type="range"
+                    class="input-fader"
+                    id="inputGainL"
+                    min="-60"
+                    max="12"
+                    step="0.5"
+                    value="0"
+                >
+            </div>
+
+            <div class="input-actions">
+                <button type="button" id="inputMuteL">MUTE L</button>
+            </div>
+        </div>
+
+        <!-- RIGHT CHANNEL -->
+        <div class="input-channel">
+            <div class="section-title">INPUT RIGHT (R)</div>
+
+            <div class="input-meter">
+                <div class="input-meter-fill" id="inputMeterR"></div>
+            </div>
+
+            <div class="input-fader-value" id="inputGainRValue">
+                0.0 dB
+            </div>
+
+            <div class="input-fader-wrap">
+                <div class="input-db-scale">
+                    <span>+12</span>
+                    <span>0</span>
+                    <span>-20</span>
+                    <span>-40</span>
+                    <span>-60</span>
+                </div>
+
+                <input
+                    type="range"
+                    class="input-fader"
+                    id="inputGainR"
+                    min="-60"
+                    max="12"
+                    step="0.5"
+                    value="0"
+                >
+            </div>
+
+            <div class="input-actions">
+                <button type="button" id="inputMuteR">MUTE R</button>
+            </div>
+        </div>
+
+    </div>
+
+    <button type="button" class="input-link" id="inputLink">
+        LINK L/R : OFF
+    </button>
+
+    <div class="small-status">
+        STEREO INPUT • LEFT / RIGHT
+    </div>
+
+</div>
+<!-- ===== END AS AUDIO INPUT PANEL ===== -->
     <button onclick="testAudioCapture()">
         TEST AUDIO CAPTURE
     </button>
