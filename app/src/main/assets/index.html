@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AS AUDIO DLMS</title>
 
+}
 <style>
 * { box-sizing: border-box; }
 
@@ -376,7 +377,38 @@ h2 {
     </div>
 
 </div>
+<!-- AS AUDIO BOTTOM NAVIGATION -->
+<nav class="bottom-nav">
+    <button class="nav-item active" onclick="showMenu('HOME', this)">
+        <span>⌂</span>
+        <small>HOME</small>
+    </button>
 
+    <button class="nav-item" onclick="showMenu('INPUT', this)">
+        <span>◉</span>
+        <small>INPUT</small>
+    </button>
+
+    <button class="nav-item" onclick="showMenu('EQ', this)">
+        <span>〰</span>
+        <small>EQ</small>
+    </button>
+
+    <button class="nav-item" onclick="showMenu('DYNAMICS', this)">
+        <span>▥</span>
+        <small>DYNAMICS</small>
+    </button>
+
+    <button class="nav-item" onclick="showMenu('OUTPUT', this)">
+        <span>◈</span>
+        <small>OUTPUT</small>
+    </button>
+
+    <button class="nav-item" onclick="showMenu('PRESET', this)">
+        <span>☷</span>
+        <small>PRESET</small>
+    </button>
+</nav>
 <script>
 const audioPlayer = document.getElementById("audioPlayer");
 const filePicker = document.getElementById("filePicker");
