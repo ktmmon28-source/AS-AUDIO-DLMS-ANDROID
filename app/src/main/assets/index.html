@@ -631,14 +631,30 @@ function showMenu(menu, button) {
 
     button.classList.add("active");
 
+    const home = document.getElementById("homeScreen");
+    const input = document.getElementById("inputControlScreen");
+    const status = document.getElementById("status");
+
+    if (home) home.style.display = "none";
+    if (input) input.style.display = "none";
+
     if (menu === "HOME") {
-        document.getElementById("status").textContent =
-            "AS AUDIO HOME - SYSTEM READY";
+        if (home) home.style.display = "block";
+        if (status) {
+            status.textContent = "AS AUDIO HOME - SYSTEM READY";
+        }
+    } else if (menu === "INPUT") {
+        if (input) input.style.display = "block";
+        if (status) {
+            status.textContent = "AS AUDIO INPUT - STEREO READY";
+        }
     } else {
-        document.getElementById("status").textContent =
-            menu + " MENU - TAMPILAN SEDANG DISIAPKAN";
+        if (status) {
+            status.textContent =
+                menu + " MENU - TAMPILAN SEDANG DISIAPKAN";
+        }
     }
-}
+    }
 // ===== END MENU NAVIGATION =====
 let tracks = [];
 let currentTrack = -1;
